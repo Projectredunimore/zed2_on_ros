@@ -29,10 +29,12 @@
 #include <iomanip>
 
 #include <opencv2/opencv.hpp>
-// #include <cv_bridge/cv_bridge.h>
+#include "sensor_msgs/Image.h"
+
+#include <cv_bridge/cv_bridge.h>
 //  <---- Includes
 
-// #define TEST_FPS 1
+// #define TEST_FPS 0
 
 // The main function
 int main(int argc, char *argv[])
@@ -65,9 +67,13 @@ int main(int argc, char *argv[])
     // Frame timestamp to check FPS
     uint64_t lastFrameTs = 0;
 #endif
+	ros::init(argc, argv, "zed2_node");
+	ros::NodeHandle nh;
+	ros::Rate rate(60);
+	ros::Publisher pub = nh.advertise<sensor_msgs::Image>("/zed2_image", 1000);
 
     // Infinite video grabbing loop
-    while (1)
+    while (ros::ok())
     {
         // Get last available frame
         const sl_oc::video::Frame frame = cap_0.getLastFrame();
@@ -95,24 +101,27 @@ int main(int argc, char *argv[])
 
             // ----> Conversion from YUV 4:2:2 to BGR for visualization
             cv::Mat frameYUV = cv::Mat(frame.height, frame.width, CV_8UC2, frame.data);
-            cv::Mat frameBGR;
+	        cv::Mat frameBGR;
             cv::cvtColor(frameYUV, frameBGR, cv::COLOR_YUV2BGR_YUYV);
             // <---- Conversion from YUV 4:2:2 to BGR for visualization
-
             // Show frame
-            // sl_oc::tools::showImage( "Stream RGB", frameBGR, params.res  );
+		//sl_oc::tools::showImage( "Stream RGB", frameBGR, params.res  );
 
-            // Pubblish frame on topic
-            // msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", frame).toImageMsg();
-            // pub.publish(msg);
+            // Publish frame on topic
+	    sensor_msgs::ImagePtr msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", frameBGR).toImageMsg();
+            pub.publish(msg);
         }
         // <---- If the frame is valid we can display it
 
         // ----> Keyboard handling
-        ros::spinOnce();
-        int key = cv::waitKey(5);
-        if (key == 'q' || key == 'Q') // Quit
-            break;
+	std::cout << "ros msg published\n";
+	ros::spinOnce();
+	// std::cout << "spinned\n";
+	// rate.sleep();
+        //int key = cv::waitKey(5);
+	//std::cout << "Waiting for key\n";
+        //if (key == 'q' || key == 'Q') // Quit
+        //    break;
         // <---- Keyboard handling
     }
 
