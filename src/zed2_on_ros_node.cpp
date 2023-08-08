@@ -67,10 +67,12 @@ int main(int argc, char *argv[])
     // Frame timestamp to check FPS
     uint64_t lastFrameTs = 0;
 #endif
+    // ----> ROS initialization
 	ros::init(argc, argv, "zed2_node");
 	ros::NodeHandle nh;
 	ros::Rate rate(60);
 	ros::Publisher pub = nh.advertise<sensor_msgs::Image>("/zed2_image", 1000);
+    // <---- ROS initialization
 
     // Infinite video grabbing loop
     while (ros::ok())

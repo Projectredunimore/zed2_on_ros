@@ -150,7 +150,7 @@ int main(int argc, char *argv[])
             // sl_oc::tools::showImage("left RECT", left_rect, params.res);
             // <---- Apply rectification
 
-            // Pubblish frame on topic
+            // Publish frame on topic
             lraw_msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", left_raw).toImageMsg();
             rraw_msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", right_raw).toImageMsg();
             lrect_msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", left_rect).toImageMsg();
