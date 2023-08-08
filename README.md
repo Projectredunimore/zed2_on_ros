@@ -7,6 +7,7 @@ ZED2 Open Capture ROS Wrapper built without CUDA
 
  - ROS Noetic
  - OpenCV
+ -  PointCloudLibrary (see installation instruction below)
 
 ## Installation
 
@@ -34,4 +35,21 @@ Build the library
     cd your_catkin_ws/
     catkin build
    
+   ## Build PointCloudLibrary
+  Download .tar Release file from [GitHub pcl repository](https://github.com/PointCloudLibrary/pcl)
+
+Build and install
+
+    tar xvf pcl-pcl-1.x.x.tar.gz
+    cd pcl-pcl-1.x.x && mkdir build && cd build
+	cmake -DCMAKE_BUILD_TYPE=Release ..
+	make -j2
+	sudo make -j2 install
+
+
+Create symlink for ROS includes
+
+    cd /usr/local/include
+    sudo ln -s pcl-1.x/pcl pcl 
+
   
