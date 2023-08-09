@@ -28,10 +28,10 @@
 #include <map>
 #include <mutex>
 
-#ifdef SENSORS_MOD_AVAILABLE
+// #ifdef SENSORS_MOD_AVAILABLE
 
 #include "sensorcapture_def.hpp"
-#include "hidapi.h"
+#include <hidapi/hidapi.h>
 
 namespace sl_oc {
 
@@ -307,7 +307,7 @@ private:
 }
 }
 
-#endif
+// #endif
 
 /** \example zed_oc_sensors_example.cpp
  * Example of how to use the SensorCapture class to get the raw sensors data at the maximum available

@@ -22,8 +22,8 @@
 
 //// ----> Includes
 #include "videocapture.hpp"
-#include "zed2_on_ros/sensorcapture.hpp"
-#include "zed2_on_ros/sensorcapture_def.hpp"
+#include <zed2_on_ros/sensorcapture.hpp>
+#include <zed2_on_ros/sensorcapture_def.hpp>
 #include "ocv_display.hpp"
 
 #include <iostream>
