@@ -50,6 +50,7 @@
 #include "sensor_msgs/Image.h"
 #include <sensor_msgs/PointCloud2.h>
 #include "pcl_conversions/pcl_conversions.h"
+#include <std_msgs/Float32.h>
 
 //  <---- Includes
 
@@ -70,6 +71,7 @@ int main(int argc, char *argv[])
 	ros::NodeHandle nh;
 	ros::Publisher depth_pub = nh.advertise<sensor_msgs::Image>("/depth_image", 1000);
     ros::Publisher cloud_pub = nh.advertise<sensor_msgs::PointCloud2>("/point_cloud", 1000);
+    ros::Publisher dist_pub = nh.advertise<std_msgs::Float32>("/distance", 1000);
     // <---- ROS initialization
 
     sl_oc::VERBOSITY verbose = sl_oc::VERBOSITY::INFO;
@@ -196,6 +198,7 @@ int main(int argc, char *argv[])
     // Initialize ROS msgs
     sensor_msgs::ImagePtr disp_msg;
     sensor_msgs::PointCloud2 cloud_msg;
+    std_msgs::Float32 dist_msg;
 
 
     // Infinite video grabbing loop
@@ -295,6 +298,8 @@ int main(int argc, char *argv[])
             // float central_depth = left_depth_map.getMat(cv::ACCESS_READ).at<float>(left_depth_map.rows/2, left_depth_map.cols/2 );
             float central_depth = left_depth_map.at<float>(left_depth_map.rows/2, left_depth_map.cols/2 );
             std::cout << "Depth of the central pixel: " << central_depth << " mm" << std::endl;
+            dist_msg.data = central_depth;
+            dist_pub.publish(dist_msg);
             // <---- Extract Depth map
 
             // ----> Create Point Cloud
