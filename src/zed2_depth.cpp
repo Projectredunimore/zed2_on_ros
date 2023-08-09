@@ -53,7 +53,7 @@
 
 //  <---- Includes
 
-#define USE_OCV_TAPI // Comment to use "normal" cv::Mat instead of CV::UMat
+// #define USE_OCV_TAPI // Comment to use "normal" cv::Mat instead of CV::UMat
 #define USE_HALF_SIZE_DISP // Comment to compute depth matching on full image frames
 
 
@@ -153,7 +153,7 @@ int main(int argc, char *argv[])
     cv::UMat left_disp_image(cv::USAGE_ALLOCATE_DEVICE_MEMORY); // Normalized and color remapped disparity map to be displayed
     cv::UMat left_depth_map(cv::USAGE_ALLOCATE_DEVICE_MEMORY); // Depth map in float32
 #else
-    cv::Mat frameBGR, left_raw, left_rect, right_raw, right_rect, frameYUV, left_for_matcher, right_for_matcher, left_disp_half,left_disp,left_disp_float, left_disp_vis;
+    cv::Mat frameBGR, left_raw, left_rect, right_raw, right_rect, frameYUV, left_for_matcher, right_for_matcher, left_disp_half,left_disp,left_disp_float, left_disp_vis, left_disp_image, left_depth_map;
 #endif
     // <---- Declare OpenCV images
 
@@ -195,7 +195,7 @@ int main(int argc, char *argv[])
 
     // Initialize ROS msgs
     sensor_msgs::ImagePtr disp_msg;
-    sensor_msgs::PointCloud2Ptr cloud_msg;
+    sensor_msgs::PointCloud2 cloud_msg;
 
 
     // Infinite video grabbing loop
@@ -258,7 +258,7 @@ int main(int argc, char *argv[])
 
 #ifdef USE_HALF_SIZE_DISP
             cv::multiply(left_disp_float,2.,left_disp_float); // Last 4 bits of SGBM disparity are decimal
-            cv::UMat tmp = left_disp_float; // Required for OpenCV 3.2
+            cv::Mat tmp = left_disp_float; // Required for OpenCV 3.2
             cv::resize(tmp, left_disp_float, cv::Size(), 1./resize_fact, 1./resize_fact, cv::INTER_AREA);
 #else
             left_disp = left_disp_float;
@@ -292,7 +292,8 @@ int main(int argc, char *argv[])
             double num = static_cast<double>(fx*baseline);
             cv::divide(num,left_disp_float,left_depth_map);
 
-            float central_depth = left_depth_map.getMat(cv::ACCESS_READ).at<float>(left_depth_map.rows/2, left_depth_map.cols/2 );
+            // float central_depth = left_depth_map.getMat(cv::ACCESS_READ).at<float>(left_depth_map.rows/2, left_depth_map.cols/2 );
+            float central_depth = left_depth_map.at<float>(left_depth_map.rows/2, left_depth_map.cols/2 );
             std::cout << "Depth of the central pixel: " << central_depth << " mm" << std::endl;
             // <---- Extract Depth map
 
@@ -300,7 +301,8 @@ int main(int argc, char *argv[])
             sl_oc::tools::StopWatch pc_clock;
             size_t buf_size = static_cast<size_t>(left_depth_map.cols * left_depth_map.rows);
             std::vector<cv::Vec3d> buffer( buf_size, cv::Vec3f::all( std::numeric_limits<float>::quiet_NaN() ) );
-            cv::Mat depth_map_cpu = left_depth_map.getMat(cv::ACCESS_READ);
+            // cv::Mat depth_map_cpu = left_depth_map.getMat(cv::ACCESS_READ);
+            cv::Mat depth_map_cpu = left_depth_map;
             float* depth_vec = (float*)(&(depth_map_cpu.data[0]));
 
 #pragma omp parallel for
@@ -330,7 +332,7 @@ int main(int argc, char *argv[])
             char pr = 100, pg = 100, pb = 100;
             pcl::PointCloud<pcl::PointXYZ>::Ptr pclCloud(new pcl::PointCloud<pcl::PointXYZ>);
             // assuming cloudMat contains X,Y,Z values in consecutive columns
-            for (int i = 0; i < cloudMat.cols(); i++)
+            for (int i = 0; i < cloudMat.cols; i++)
             {
                 pcl::PointXYZ point;
                 point.x = cloudMat.at<float>(0,i);
@@ -338,10 +340,10 @@ int main(int argc, char *argv[])
                 point.z = cloudMat.at<float>(2,i);
 
                 // when colors need to be added
-                uint32_t rgb = static_cast<uint32_t>(pr) << 16 |
-                               static_cast<uint32_t>(pg) << 8 |
-                               static_cast<uint32_t>(pb);
-                point.rgb = *reinterpret_cast<float*>(&rgb);
+                // uint32_t rgb = static_cast<uint32_t>(pr) << 16 |
+                //                static_cast<uint32_t>(pg) << 8 |
+                //                static_cast<uint32_t>(pb);
+                // point.rgb = *reinterpret_cast<float*>(&rgb);
 
                 pclCloud->points.push_back(point);
             }

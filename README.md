@@ -8,6 +8,7 @@ ZED2 Open Capture ROS Wrapper built without CUDA
  - ROS Noetic
  - OpenCV
  -  PointCloudLibrary (see installation instruction below)
+ - Eigen3
 
 ## Installation
 

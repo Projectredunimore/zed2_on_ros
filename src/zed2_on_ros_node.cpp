@@ -110,7 +110,7 @@ int main(int argc, char *argv[])
 		//sl_oc::tools::showImage( "Stream RGB", frameBGR, params.res  );
 
             // Publish frame on topic
-	    sensor_msgs::ImagePtr msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", frameBGR).toImageMsg();
+	        sensor_msgs::ImagePtr msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", frameBGR).toImageMsg();
             pub.publish(msg);
         }
         // <---- If the frame is valid we can display it
