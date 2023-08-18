@@ -1,13 +1,17 @@
 <?xml version="1.0"?>
 <launch>
 
-    <arg name="USE_DEPTH" default="false"/>
-    <arg name="USE_RECT" default="true" />
+    <arg name="USE_DEPTH" default="true"/>
+    <arg name="USE_RECT" default="false" />
     <arg name="USE_SENSORS" default="true" />
     <arg name="DISPLAY_IMAGES" default="false" />
 
     <node if="$(arg USE_DEPTH)" pkg="zed2_on_ros" type="zed2_depth" name="zed2_depth" ns="zed2">
-        <!-- <param name="display_images" value="$(arg DISPLAY_IMAGES)" /> -->
+        <!-- <param name="PUBLISH_POINTCLOUD" value="true" /> -->
+        <remap from="/depth_image" to="/zed2/depth_image"/>
+        <remap from="/left/image_rect_color" to="/zed2/left_image_rect_color"/>
+        <remap from="/right/image_rect_color" to="/zed2/right/image_rect_color"/>
+        <remap from="/poincloud" to="/zed2/pointcloud"/>
     </node>
 
     <node if="$(arg USE_RECT)" pkg="zed2_on_ros" type="zed2_rect" name="zed2_rect" ns="zed2">

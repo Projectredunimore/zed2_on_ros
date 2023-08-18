@@ -316,66 +316,63 @@ int main(int argc, char *argv[])
             dist_pub.publish(dist_msg);
             // <---- Extract Depth map
 
-            if (PUBLISH_POINTCLOUD)
-            {
-                // ----> Create Point Cloud
-                sl_oc::tools::StopWatch pc_clock;
-                size_t buf_size = static_cast<size_t>(left_depth_map.cols * left_depth_map.rows);
-                std::vector<cv::Vec3d> buffer( buf_size, cv::Vec3f::all( std::numeric_limits<float>::quiet_NaN() ) );
-                // cv::Mat depth_map_cpu = left_depth_map.getMat(cv::ACCESS_READ);
-                cv::Mat depth_map_cpu = left_depth_map;
-                float* depth_vec = (float*)(&(depth_map_cpu.data[0]));
+            // ----> Create Point Cloud
+            sl_oc::tools::StopWatch pc_clock;
+            size_t buf_size = static_cast<size_t>(left_depth_map.cols * left_depth_map.rows);
+            std::vector<cv::Vec3d> buffer( buf_size, cv::Vec3f::all( std::numeric_limits<float>::quiet_NaN() ) );
+            // cv::Mat depth_map_cpu = left_depth_map.getMat(cv::ACCESS_READ);
+            cv::Mat depth_map_cpu = left_depth_map;
+            float* depth_vec = (float*)(&(depth_map_cpu.data[0]));
 
 #pragma omp parallel for
-                for(size_t idx=0; idx<buf_size;idx++ )
+            for(size_t idx=0; idx<buf_size;idx++ )
+            {
+                size_t r = idx/left_depth_map.cols;
+                size_t c = idx%left_depth_map.cols;
+                double depth = static_cast<double>(depth_vec[idx]);
+                //std::cout << depth << " ";
+                if(!isinf(depth) && depth >=0 && depth > stereoPar.minDepth_mm && depth < stereoPar.maxDepth_mm)
                 {
-                    size_t r = idx/left_depth_map.cols;
-                    size_t c = idx%left_depth_map.cols;
-                    double depth = static_cast<double>(depth_vec[idx]);
-                    //std::cout << depth << " ";
-                    if(!isinf(depth) && depth >=0 && depth > stereoPar.minDepth_mm && depth < stereoPar.maxDepth_mm)
-                    {
-                        buffer[idx].val[2] = depth; // Z
-                        buffer[idx].val[0] = (c-cx)*depth/fx; // X
-                        buffer[idx].val[1] = (r-cy)*depth/fy; // Y
-                    }
+                    buffer[idx].val[2] = depth; // Z
+                    buffer[idx].val[0] = (c-cx)*depth/fx; // X
+                    buffer[idx].val[1] = (r-cy)*depth/fy; // Y
                 }
-
-                cloudMat = cv::Mat( left_depth_map.rows, left_depth_map.cols, CV_64FC3, &buffer[0] ).clone();
-
-                double pc_elapsed = stereo_clock.toc();
-                std::stringstream pcElabInfo;
-    //            pcElabInfo << "Point cloud processing: " << pc_elapsed << " sec - Freq: " << 1./pc_elapsed;
-                //std::cout << pcElabInfo.str() << std::endl;
-                // <---- Create Point Cloud
-
-            
-                // Convert pointcloud to ROS msg
-                char pr = 100, pg = 100, pb = 100;
-                pcl::PointCloud<pcl::PointXYZ>::Ptr pclCloud(new pcl::PointCloud<pcl::PointXYZ>);
-                // assuming cloudMat contains X,Y,Z values in consecutive columns
-                for (int i = 0; i < cloudMat.cols; i++)
-                {
-                    pcl::PointXYZ point;
-                    point.x = cloudMat.at<float>(0,i);
-                    point.y = cloudMat.at<float>(1,i);
-                    point.z = cloudMat.at<float>(2,i);
-
-                    // when colors need to be added
-                    // uint32_t rgb = static_cast<uint32_t>(pr) << 16 |
-                    //                static_cast<uint32_t>(pg) << 8 |
-                    //                static_cast<uint32_t>(pb);
-                    // point.rgb = *reinterpret_cast<float*>(&rgb);
-
-                    pclCloud->points.push_back(point);
-                }
-
-                // Publish pointcloud on topic
-                pcl::toROSMsg(*pclCloud, cloud_msg);
-                cloud_msg.header.frame_id = "camera_link";
-                cloud_msg.header.stamp = ros::Time::now();
-                cloud_pub.publish(cloud_msg);
             }
+
+            cloudMat = cv::Mat( left_depth_map.rows, left_depth_map.cols, CV_64FC3, &buffer[0] ).clone();
+
+            double pc_elapsed = stereo_clock.toc();
+            std::stringstream pcElabInfo;
+//            pcElabInfo << "Point cloud processing: " << pc_elapsed << " sec - Freq: " << 1./pc_elapsed;
+            //std::cout << pcElabInfo.str() << std::endl;
+            // <---- Create Point Cloud
+
+        
+            // Convert pointcloud to ROS msg
+            char pr = 100, pg = 100, pb = 100;
+            pcl::PointCloud<pcl::PointXYZ>::Ptr pclCloud(new pcl::PointCloud<pcl::PointXYZ>);
+            // assuming cloudMat contains X,Y,Z values in consecutive columns
+            for (int i = 0; i < cloudMat.cols; i++)
+            {
+                pcl::PointXYZ point;
+                point.x = cloudMat.at<float>(0,i);
+                point.y = cloudMat.at<float>(1,i);
+                point.z = cloudMat.at<float>(2,i);
+
+                // when colors need to be added
+                // uint32_t rgb = static_cast<uint32_t>(pr) << 16 |
+                //                static_cast<uint32_t>(pg) << 8 |
+                //                static_cast<uint32_t>(pb);
+                // point.rgb = *reinterpret_cast<float*>(&rgb);
+
+                pclCloud->points.push_back(point);
+            }
+
+            // Publish pointcloud on topic
+            pcl::toROSMsg(*pclCloud, cloud_msg);
+            cloud_msg.header.frame_id = "camera_link";
+            cloud_msg.header.stamp = ros::Time::now();
+            cloud_pub.publish(cloud_msg);
 
             // Publish Depth frame on topic
             disp_msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", left_disp_image).toImageMsg();
