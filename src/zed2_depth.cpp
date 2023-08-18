@@ -57,7 +57,6 @@
 // #define USE_OCV_TAPI // Comment to use "normal" cv::Mat instead of CV::UMat
 #define USE_HALF_SIZE_DISP // Comment to compute depth matching on full image frames
 
-
 // The main function
 int main(int argc, char *argv[])
 {
@@ -70,8 +69,16 @@ int main(int argc, char *argv[])
     ros::init(argc, argv, "zed2_depth_node");
 	ros::NodeHandle nh;
 	ros::Publisher depth_pub = nh.advertise<sensor_msgs::Image>("/depth_image", 1000);
-    ros::Publisher cloud_pub = nh.advertise<sensor_msgs::PointCloud2>("/point_cloud", 1000);
+	ros::Publisher left_pub = nh.advertise<sensor_msgs::Image>("/left/image_rect_color", 1000);
+	ros::Publisher right_pub = nh.advertise<sensor_msgs::Image>("/right/image_rect_color", 1000);
     ros::Publisher dist_pub = nh.advertise<std_msgs::Float32>("/distance", 1000);
+    ros::Publisher cloud_pub = nh.advertise<sensor_msgs::PointCloud2>("/point_cloud", 1000);
+
+
+    // get parameters from launch file
+    bool PUBLISH_POINTCLOUD = false;
+    nh.getParam("PUBLISH_POINTCLOUD", PUBLISH_POINTCLOUD);
+
     // <---- ROS initialization
 
     sl_oc::VERBOSITY verbose = sl_oc::VERBOSITY::INFO;
@@ -199,6 +206,7 @@ int main(int argc, char *argv[])
     sensor_msgs::ImagePtr disp_msg;
     sensor_msgs::PointCloud2 cloud_msg;
     std_msgs::Float32 dist_msg;
+    sensor_msgs::ImagePtr left_msg, right_msg;
 
 
     // Infinite video grabbing loop
@@ -278,6 +286,12 @@ int main(int argc, char *argv[])
             sl_oc::tools::showImage("Left rect.", left_rect, params.res,true, remapElabInfo.str());
             // <---- Show frames
 
+            // Publish image frames on topic
+	        left_msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", left_rect).toImageMsg();
+            right_msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", right_rect).toImageMsg();
+            left_pub.publish(left_msg);
+            right_pub.publish(right_msg);
+
             // ----> Show disparity image
             cv::add(left_disp_float,-static_cast<double>(stereoPar.minDisparity-1),left_disp_float); // Minimum disparity offset correction
             cv::multiply(left_disp_float,1./stereoPar.numDisparities,left_disp_image,255., CV_8UC1 ); // Normalization and rescaling
@@ -302,62 +316,66 @@ int main(int argc, char *argv[])
             dist_pub.publish(dist_msg);
             // <---- Extract Depth map
 
-            // ----> Create Point Cloud
-            sl_oc::tools::StopWatch pc_clock;
-            size_t buf_size = static_cast<size_t>(left_depth_map.cols * left_depth_map.rows);
-            std::vector<cv::Vec3d> buffer( buf_size, cv::Vec3f::all( std::numeric_limits<float>::quiet_NaN() ) );
-            // cv::Mat depth_map_cpu = left_depth_map.getMat(cv::ACCESS_READ);
-            cv::Mat depth_map_cpu = left_depth_map;
-            float* depth_vec = (float*)(&(depth_map_cpu.data[0]));
+            if (PUBLISH_POINTCLOUD)
+            {
+                // ----> Create Point Cloud
+                sl_oc::tools::StopWatch pc_clock;
+                size_t buf_size = static_cast<size_t>(left_depth_map.cols * left_depth_map.rows);
+                std::vector<cv::Vec3d> buffer( buf_size, cv::Vec3f::all( std::numeric_limits<float>::quiet_NaN() ) );
+                // cv::Mat depth_map_cpu = left_depth_map.getMat(cv::ACCESS_READ);
+                cv::Mat depth_map_cpu = left_depth_map;
+                float* depth_vec = (float*)(&(depth_map_cpu.data[0]));
 
 #pragma omp parallel for
-            for(size_t idx=0; idx<buf_size;idx++ )
-            {
-                size_t r = idx/left_depth_map.cols;
-                size_t c = idx%left_depth_map.cols;
-                double depth = static_cast<double>(depth_vec[idx]);
-                //std::cout << depth << " ";
-                if(!isinf(depth) && depth >=0 && depth > stereoPar.minDepth_mm && depth < stereoPar.maxDepth_mm)
+                for(size_t idx=0; idx<buf_size;idx++ )
                 {
-                    buffer[idx].val[2] = depth; // Z
-                    buffer[idx].val[0] = (c-cx)*depth/fx; // X
-                    buffer[idx].val[1] = (r-cy)*depth/fy; // Y
+                    size_t r = idx/left_depth_map.cols;
+                    size_t c = idx%left_depth_map.cols;
+                    double depth = static_cast<double>(depth_vec[idx]);
+                    //std::cout << depth << " ";
+                    if(!isinf(depth) && depth >=0 && depth > stereoPar.minDepth_mm && depth < stereoPar.maxDepth_mm)
+                    {
+                        buffer[idx].val[2] = depth; // Z
+                        buffer[idx].val[0] = (c-cx)*depth/fx; // X
+                        buffer[idx].val[1] = (r-cy)*depth/fy; // Y
+                    }
                 }
+
+                cloudMat = cv::Mat( left_depth_map.rows, left_depth_map.cols, CV_64FC3, &buffer[0] ).clone();
+
+                double pc_elapsed = stereo_clock.toc();
+                std::stringstream pcElabInfo;
+    //            pcElabInfo << "Point cloud processing: " << pc_elapsed << " sec - Freq: " << 1./pc_elapsed;
+                //std::cout << pcElabInfo.str() << std::endl;
+                // <---- Create Point Cloud
+
+            
+                // Convert pointcloud to ROS msg
+                char pr = 100, pg = 100, pb = 100;
+                pcl::PointCloud<pcl::PointXYZ>::Ptr pclCloud(new pcl::PointCloud<pcl::PointXYZ>);
+                // assuming cloudMat contains X,Y,Z values in consecutive columns
+                for (int i = 0; i < cloudMat.cols; i++)
+                {
+                    pcl::PointXYZ point;
+                    point.x = cloudMat.at<float>(0,i);
+                    point.y = cloudMat.at<float>(1,i);
+                    point.z = cloudMat.at<float>(2,i);
+
+                    // when colors need to be added
+                    // uint32_t rgb = static_cast<uint32_t>(pr) << 16 |
+                    //                static_cast<uint32_t>(pg) << 8 |
+                    //                static_cast<uint32_t>(pb);
+                    // point.rgb = *reinterpret_cast<float*>(&rgb);
+
+                    pclCloud->points.push_back(point);
+                }
+
+                // Publish pointcloud on topic
+                pcl::toROSMsg(*pclCloud, cloud_msg);
+                cloud_msg.header.frame_id = "camera_link";
+                cloud_msg.header.stamp = ros::Time::now();
+                cloud_pub.publish(cloud_msg);
             }
-
-            cloudMat = cv::Mat( left_depth_map.rows, left_depth_map.cols, CV_64FC3, &buffer[0] ).clone();
-
-            double pc_elapsed = stereo_clock.toc();
-            std::stringstream pcElabInfo;
-//            pcElabInfo << "Point cloud processing: " << pc_elapsed << " sec - Freq: " << 1./pc_elapsed;
-            //std::cout << pcElabInfo.str() << std::endl;
-            // <---- Create Point Cloud
-
-            // Convert pointcloud to ROS msg
-            char pr = 100, pg = 100, pb = 100;
-            pcl::PointCloud<pcl::PointXYZ>::Ptr pclCloud(new pcl::PointCloud<pcl::PointXYZ>);
-            // assuming cloudMat contains X,Y,Z values in consecutive columns
-            for (int i = 0; i < cloudMat.cols; i++)
-            {
-                pcl::PointXYZ point;
-                point.x = cloudMat.at<float>(0,i);
-                point.y = cloudMat.at<float>(1,i);
-                point.z = cloudMat.at<float>(2,i);
-
-                // when colors need to be added
-                // uint32_t rgb = static_cast<uint32_t>(pr) << 16 |
-                //                static_cast<uint32_t>(pg) << 8 |
-                //                static_cast<uint32_t>(pb);
-                // point.rgb = *reinterpret_cast<float*>(&rgb);
-
-                pclCloud->points.push_back(point);
-            }
-
-            // Publish pointcloud on topic
-            pcl::toROSMsg(*pclCloud, cloud_msg);
-            cloud_msg.header.frame_id = "camera_link";
-            cloud_msg.header.stamp = ros::Time::now();
-            cloud_pub.publish(cloud_msg);
 
             // Publish Depth frame on topic
             disp_msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", left_disp_image).toImageMsg();

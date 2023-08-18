@@ -117,15 +117,15 @@ int main(int argc, char *argv[])
                 std::cout << " * Frequency: " << 1e9/static_cast<float>(imuData.timestamp-last_imu_ts) << " Hz" << std::endl;
             }
             last_imu_ts = imuData.timestamp;
-            std::cout << " * Accelerations [m/s²]: " << imuData.aX << " " << imuData.aY << " " << imuData.aZ << std::endl;
+            std::cout << " * Accelerations [m/s²]: " << -imuData.aZ << " " << -imuData.aY << " " << -imuData.aX << std::endl;
             std::cout << " * Angular Velocities [°/s]: " << imuData.gX << " " << imuData.gY << " " << imuData.gZ << std::endl;
 
             // Publish ROS msg
             imu_msg.header.stamp = ros::Time::now();
             imu_msg.header.frame_id = "camera_link";
-            imu_msg.linear_acceleration.x = imuData.aX;
-            imu_msg.linear_acceleration.y = imuData.aY;
-            imu_msg.linear_acceleration.z = imuData.aZ; 
+            imu_msg.linear_acceleration.x = -imuData.aZ;
+            imu_msg.linear_acceleration.y = -imuData.aY;
+            imu_msg.linear_acceleration.z = -imuData.aX; 
             imu_msg.angular_velocity.x = imuData.gX;
             imu_msg.angular_velocity.y = imuData.gY;
             imu_msg.angular_velocity.z = imuData.gZ;
