@@ -64,14 +64,16 @@
 
 
     // ---> Init params (should be private) 
-    int resolution_;
-    std::string device_name_;
-    double frame_rate_;
-    bool show_image_, use_zed_config_;
+    int resolution_ = 1;
+    std::string device_name_ = std::string("/dev/video0");
+    double frame_rate_ = 30.0;
+    bool show_image_ = false;
+    bool use_zed_config_ = true;
     double width_, height_;
-    std::string left_frame_id_, right_frame_id_;
+    std::string left_frame_id_ = "left_camera";
+    std::string right_frame_id_ = "right_camera";
     std::string config_file_location_;
-    std::string encoding_;
+    std::string encoding_ = std::string("bgr8");
     // <---- Init params
 
   /**
@@ -95,15 +97,23 @@
     {
       case 0:
         reso_str = "2K";
+        width_ = 4416;
+        height_ = 1242;
         break;
       case 1:
         reso_str = "FHD";
+        width_ = 3840;
+        height_ = 1080;
         break;
       case 2:
         reso_str = "HD";
+        width_ = 2560;
+        height_ = 720;
         break;
       case 3:
         reso_str = "VGA";
+        width_ = 1344;
+        height_ = 376;
         break;
     }
     // left value
@@ -267,18 +277,19 @@ int main(int argc, char *argv[])
     // <---- ROS initialization
 
     // ----> Get ROS params
-    nh.param("resolution", resolution_, 1);
-    nh.param("frame_rate", frame_rate_, 30.0);
-    nh.param("config_file_location", config_file_location_, std::string(""));
-    nh.param("left_frame_id", left_frame_id_, std::string("left_camera"));
-    nh.param("right_frame_id", right_frame_id_, std::string("right_camera"));
-    nh.param("show_image", show_image_, false);
-    nh.param("use_zed_config", use_zed_config_, true);
-    nh.param("device_name", device_name_, std::string("/dev/video0"));
-    nh.param("encoding", encoding_, std::string("brg8"));
+    nh.getParam("resolution", resolution_);
+    nh.getParam("frame_rate", frame_rate_);
+    nh.getParam("config_file_location", config_file_location_);
+    nh.getParam("left_frame_id", left_frame_id_);
+    nh.getParam("right_frame_id", right_frame_id_);
+    nh.getParam("show_image", show_image_);
+    nh.getParam("use_zed_config", use_zed_config_);
+    nh.getParam("device_name", device_name_);
+    nh.getParam("encoding", encoding_);
     // <---- Get ROS params
 
     std::cout << "Config file: " << config_file_location_ << std::endl;
+    std::cout << "use_zed_config: " << use_zed_config_ << std::endl;
 
 
     sl_oc::VERBOSITY verbose = sl_oc::VERBOSITY::INFO;
