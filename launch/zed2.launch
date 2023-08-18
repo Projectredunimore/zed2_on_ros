@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<launch>
+
+    <arg name="USE_DEPTH" default="false"/>
+    <arg name="USE_RECT" default="true" />
+    <arg name="USE_SENSORS" default="true" />
+    <arg name="DISPLAY_IMAGES" default="false" />
+
+    <node if="$(arg USE_DEPTH)" pkg="zed2_on_ros" type="zed2_depth" name="zed2_depth" ns="zed2">
+        <!-- <param name="display_images" value="$(arg DISPLAY_IMAGES)" /> -->
+    </node>
+
+    <node if="$(arg USE_RECT)" pkg="zed2_on_ros" type="zed2_rect" name="zed2_rect" ns="zed2">
+        <!-- <param name="display_images" value="$(arg DISPLAY_IMAGES)" /> -->
+        <remap from="/left_image_raw" to="/zed2/left_image_raw" />
+        <remap from="/right_image_raw" to="/zed2/right_image_raw" />
+        <remap from="/left_image_rect" to="/zed2/left_image_rect" />
+        <remap from="/right_image_rect" to="/zed2/right_image_rect" />
+    </node>
+
+    <node if="$(arg USE_SENSORS)" pkg="zed2_on_ros" type="zed2_sensors" name="zed2_sensors" ns="zed2" >
+        <remap from="/imu" to="/zed2/imu" />
+        <remap from="/environment/humidity" to="/zed2/environment/humidity" />
+        <remap from="/environment/pressure" to="/zed2/environment/pressure" />
+        <remap from="/environment/temperature" to="/zed2/environment/temperature" />
+    </node>
+
+</launch>
