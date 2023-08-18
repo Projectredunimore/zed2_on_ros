@@ -6,11 +6,35 @@
     <arg name="USE_SENSORS" default="true" />
     <arg name="DISPLAY_IMAGES" default="false" />
 
-    <node if="$(arg USE_DEPTH)" pkg="zed2_on_ros" type="zed2_depth" name="zed2_depth" ns="zed2">
+    <arg name="config_file_location" default="$(find zed2_on_ros)/config/SN5828.conf"/>
+    <arg name="camera_namespace" default="zed2"/>
+    <!-- to find your device name, use ls /dev/ and look for the name begin with video -->
+    <arg name="device_name" value="/dev/video0"/>
+    <arg name="resolution" default="1"/>    		<!-- 0: HD2K, 1: HD1080, 2: HD720, 3: VGA-->
+    <arg name="frame_rate" default="30"/>
+    <arg name="show_image" default="false"/>
+    <arg name="encoding" default="bgr8"/>
+    <arg name="use_zed_config" default="true"/>
+    <arg name="left_frame" default="left_frame"/>
+    <arg name="right_frame" default="right_frame"/>
+
+    <node if="$(arg USE_DEPTH)" pkg="zed2_on_ros" type="zed2_depth_info" name="zed2_depth" output="screen" ns="zed2">
         <!-- <param name="PUBLISH_POINTCLOUD" value="true" /> -->
+        <param name="resolution" value="$(arg resolution)" unless="$(eval resolution>3)"/>
+        <param name="frame_rate" value="$(arg frame_rate)"/>
+        <param name="config_file_location" value="$(arg config_file_location)"/>
+        <param name="show_image" value="$(arg show_image)"/>
+        <param name="left_frame_id" value="$(arg left_frame)"/>
+        <param name="right_frame_id" value="$(arg right_frame)"/>
+        <param name="use_zed_config" value="$(arg use_zed_config)"/>
+        <param name="device_name" value="$(arg device_name)"/>
+        <param name="encoding" value="$(arg encoding)"/>
+ 
         <remap from="/depth_image" to="/zed2/depth_image"/>
         <remap from="/left/image_rect_color" to="/zed2/left_image_rect_color"/>
         <remap from="/right/image_rect_color" to="/zed2/right/image_rect_color"/>
+        <remap from="/right/camera_info" to="zed2/right/camera_info"/>
+        <remap from="/left/camera_info" to="zed2/left/camera_info"/>
         <remap from="/poincloud" to="/zed2/pointcloud"/>
     </node>
 

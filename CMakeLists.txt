@@ -24,6 +24,7 @@ include_directories(
 add_executable(${PROJECT_NAME}_node src/zed2_on_ros_node.cpp)
 add_executable(zed2_rect src/zed2_rect.cpp)
 add_executable(zed2_depth src/zed2_depth.cpp)
+add_executable(zed2_depth_info src/zed2_depth_info.cpp)
 add_executable(zed2_multi src/zed2_multi.cpp)
 add_executable(zed2_sensors src/zed2_sensors.cpp)
 
@@ -42,6 +43,12 @@ target_link_libraries(zed2_rect
 )
 
 target_link_libraries(zed2_depth
+  ${catkin_LIBRARIES}
+  ${OpenCV_LIBRARIES}
+  ${ZED_LIB}
+)
+
+target_link_libraries(zed2_depth_info
   ${catkin_LIBRARIES}
   ${OpenCV_LIBRARIES}
   ${ZED_LIB}
