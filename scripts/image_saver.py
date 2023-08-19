@@ -9,9 +9,9 @@ class CLI():
         rospy.init_node('image_saver', anonymous=True)
 
         # get cameras names from launch params
-        self.cam1 = "zed2"
-        self.cam2 = "d435_left"
-        self.cam3 = "d435_right"
+        self.cam1 = rospy.get_param('~cam1_name', 'zed2')
+        self.cam2 = rospy.get_param('~cam2_name', 'd435_left')
+        self.cam3 = rospy.get_param('~cam3_name', 'd435_right')
 
         # check services exist
         rospy.wait_for_service('/image_saver/{}/save'.format(self.cam1))
