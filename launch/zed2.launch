@@ -3,10 +3,12 @@
 
     <arg name="USE_DEPTH" default="true"/>
     <arg name="USE_RECT" default="false" />
-    <arg name="USE_SENSORS" default="true" />
+    <arg name="USE_SENSORS" default="false" />
     <arg name="DISPLAY_IMAGES" default="false" />
 
     <arg name="config_file_location" default="$(find zed2_on_ros)/config/SN5828.conf"/>
+    <arg name="left_config_file_location" default="$(find zed2_on_ros)/config/left2.yaml"/>
+    <arg name="right_config_file_location" default="$(find zed2_on_ros)/config/right2.yaml"/>
     <arg name="camera_namespace" default="zed2"/>
     <!-- to find your device name, use ls /dev/ and look for the name begin with video -->
     <arg name="device_name" value="/dev/video0"/>
@@ -18,19 +20,19 @@
     <arg name="left_frame" default="left_frame"/>
     <arg name="right_frame" default="right_frame"/>
 
-    <node if="$(arg USE_DEPTH)" pkg="zed2_on_ros" type="zed2_depth" name="zed2_depth" output="screen" ns="zed2">
+    <node if="$(arg USE_DEPTH)" pkg="zed2_on_ros" type="zed2_depth" name="zed2_depth" output="screen">
         <remap from="/depth_image" to="/zed2/depth_image"/>
         <remap from="/left/image_rect_color" to="/zed2/left/image_rect_color"/>
         <remap from="/right/image_rect_color" to="/zed2/right/image_rect_color"/>
-        <remap from="/poincloud" to="/zed2/pointcloud"/>
+        <remap from="/point_cloud" to="/zed2/pointcloud"/>
     </node>
 
     <node if="$(arg USE_RECT)" pkg="zed2_on_ros" type="zed2_rect" name="zed2_rect" ns="zed2">
         <!-- <param name="display_images" value="$(arg DISPLAY_IMAGES)" /> -->
-        <remap from="/left_image_raw" to="/zed2/left_image_raw" />
-        <remap from="/right_image_raw" to="/zed2/right_image_raw" />
-        <remap from="/left_image_rect" to="/zed2/left_image_rect" />
-        <remap from="/right_image_rect" to="/zed2/right_image_rect" />
+        <remap from="/left_image_raw" to="/zed2/left/image_raw" />
+        <remap from="/right_image_raw" to="/zed2/right/image_raw" />
+        <remap from="/left_image_rect" to="/zed2/left/image_rect" />
+        <remap from="/right_image_rect" to="/zed2/right/image_rect" />
     </node>
 
     <node if="$(arg USE_SENSORS)" pkg="zed2_on_ros" type="zed2_sensors" name="zed2_sensors" ns="zed2" >
@@ -47,4 +49,6 @@
         <param name="right_frame_id" value="$(arg right_frame)"/>
     </node>
 
+    <node pkg="tf" type="static_transform_publisher" name="static_tf_1" args="0.05 -0.5 0.4 0 0 -0.707 0.707 base_link $(arg left_frame) 30"/> 
+    <node pkg="tf" type="static_transform_publisher" name="static_tf_2" args="0 -0.1 0 0 0 0 1 $(arg left_frame) $(arg right_frame) 30"/>
 </launch>

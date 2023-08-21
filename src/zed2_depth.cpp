@@ -31,7 +31,7 @@
 // OpenCV includes
 #include <opencv2/opencv.hpp>
 
-//#undef HAVE_OPENCV_VIZ // Uncomment if cannot use Viz3D for point cloud rendering
+#undef HAVE_OPENCV_VIZ // Uncomment if cannot use Viz3D for point cloud rendering
 
 #ifdef HAVE_OPENCV_VIZ
 #include <opencv2/viz.hpp>
@@ -77,7 +77,9 @@ int main(int argc, char *argv[])
 
     // get parameters from launch file
     bool PUBLISH_POINTCLOUD = false;
+    bool DISPLAY_IMAGES = false;
     nh.getParam("PUBLISH_POINTCLOUD", PUBLISH_POINTCLOUD);
+    nh.getParam("DISPLAY_IMAGES", DISPLAY_IMAGES);
 
     // <---- ROS initialization
 
@@ -282,13 +284,21 @@ int main(int argc, char *argv[])
             // <---- Stereo matching
 
             // ----> Show frames
-            sl_oc::tools::showImage("Right rect.", right_rect, params.res,true, remapElabInfo.str());
-            sl_oc::tools::showImage("Left rect.", left_rect, params.res,true, remapElabInfo.str());
+            if (DISPLAY_IMAGES)
+            {
+                sl_oc::tools::showImage("Right rect.", right_rect, params.res,true, remapElabInfo.str());
+                sl_oc::tools::showImage("Left rect.", left_rect, params.res,true, remapElabInfo.str());
+            }
             // <---- Show frames
 
             // Publish image frames on topic
+            auto now = ros::Time::now();
 	        left_msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", left_rect).toImageMsg();
             right_msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", right_rect).toImageMsg();
+            left_msg->header.stamp = now;
+            right_msg->header.stamp = now;
+            left_msg->header.frame_id = "left_frame";
+            right_msg->header.frame_id = "right_frame";
             left_pub.publish(left_msg);
             right_pub.publish(right_msg);
 
@@ -298,7 +308,10 @@ int main(int argc, char *argv[])
 
             cv::applyColorMap(left_disp_image,left_disp_image,cv::COLORMAP_JET); // COLORMAP_INFERNO is better, but it's only available starting from OpenCV v4.1.0
 
-            sl_oc::tools::showImage("Disparity", left_disp_image, params.res,true, stereoElabInfo.str());
+            if (DISPLAY_IMAGES)
+            {
+                sl_oc::tools::showImage("Disparity", left_disp_image, params.res,true, stereoElabInfo.str());
+            }
             // <---- Show disparity image
 
             // ----> Extract Depth map
@@ -311,7 +324,7 @@ int main(int argc, char *argv[])
 
             // float central_depth = left_depth_map.getMat(cv::ACCESS_READ).at<float>(left_depth_map.rows/2, left_depth_map.cols/2 );
             float central_depth = left_depth_map.at<float>(left_depth_map.rows/2, left_depth_map.cols/2 );
-            std::cout << "Depth of the central pixel: " << central_depth << " mm" << std::endl;
+            // std::cout << "Depth of the central pixel: " << central_depth << " mm" << std::endl;
             dist_msg.data = central_depth;
             dist_pub.publish(dist_msg);
             // <---- Extract Depth map
@@ -375,7 +388,9 @@ int main(int argc, char *argv[])
             cloud_pub.publish(cloud_msg);
 
             // Publish Depth frame on topic
-            disp_msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", left_disp_image).toImageMsg();
+            disp_msg = cv_bridge::CvImage(std_msgs::Header(), "mono16", left_disp_image).toImageMsg();
+            disp_msg->header.stamp = now;
+            disp_msg->header.frame_id = "left_frame";
             depth_pub.publish(disp_msg);
         }
         // <---- If the frame is valid we can display it

@@ -63,8 +63,8 @@ int main(int argc, char *argv[])
     sl_oc::VERBOSITY verbose = sl_oc::VERBOSITY::INFO;
 
     sl_oc::video::VideoParams params;
-    params.res = sl_oc::video::RESOLUTION::HD2K;
-    params.fps = sl_oc::video::FPS::FPS_15;
+    params.res = sl_oc::video::RESOLUTION::HD1080;
+    params.fps = sl_oc::video::FPS::FPS_30;
     params.verbose = verbose;
 
     // ----> Create Video Capture
@@ -108,6 +108,7 @@ int main(int argc, char *argv[])
 
     std::cout << " Camera Matrix L: \n" << cameraMatrix_left << std::endl << std::endl;
     std::cout << " Camera Matrix R: \n" << cameraMatrix_right << std::endl << std::endl;
+    std::cout << "Width: " << w << ", Height: " << h << std::endl;
     // ----> Initialize calibration
 
     cv::Mat frameBGR, left_raw, left_rect, right_raw, right_rect;
