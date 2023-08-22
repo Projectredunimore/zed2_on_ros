@@ -16,24 +16,28 @@ Clone this repository within you src folder
 
     git clone https://github.com/Projectredunimore/zed2_on_ros.git
 
-Clone zed-open-capture official repository inside the package (firstly, install following prerequisities!!!!!)
+Install `zed-open-capture` prerequisites
 
     sudo apt install build-essential
     sudo apt install cmake
     sudo apt install libusb-1.0-0-dev libhidapi-libusb0 libhidapi-dev
     sudo apt install libopencv-dev libopencv-viz-dev
+
+Clone zed-open-capture official repository inside the package
+
     cd zed2_on_ros/
     git clone https://github.com/stereolabs/zed-open-capture.git
 
-Install hidapi
-
-    pip install hidapi
-
-Build the library
+Add udev rules (Stereo cameras such as ZED 2 and ZED Mini have built-in sensors (e.g. IMU) that are identified as USB HID devices. To be able to access the USB HID device, you must add a udev rule contained in the udev folder)
     
+    cd zed-open-capture/
     cd udev
     bash install_udev_rule.sh
     cd ..
+
+
+Build the library
+    
     cd zed-open-capture/
     mkdir build
     cd build/
