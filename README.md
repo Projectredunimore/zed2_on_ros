@@ -22,6 +22,7 @@ Install `zed-open-capture` prerequisites
     sudo apt install cmake
     sudo apt install libusb-1.0-0-dev libhidapi-libusb0 libhidapi-dev
     sudo apt install libopencv-dev libopencv-viz-dev
+    sudo apt install libeigen3-dev
 
 Clone zed-open-capture official repository inside the package
 
@@ -45,11 +46,6 @@ Build the library
     make
     sudo make install
     sudo ldconfig
-
-   Build the ROS package   
-
-    cd your_catkin_ws/
-    catkin build
    
    ## Build PointCloudLibrary
   
@@ -73,3 +69,10 @@ Create symlink for ROS includes
 
     cd /usr/local/include
     sudo ln -s pcl-1.x/pcl pcl 
+    cd
+    sudo ln -s /usr/include/eigen3/Eigen/ /usr/local/include/Eigen
+
+Build the ROS package   
+
+    cd your_catkin_ws/
+    catkin build
