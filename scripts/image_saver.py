@@ -13,15 +13,20 @@ class CLI():
         self.cam2 = rospy.get_param('~cam2_name', 'd435_left')
         self.cam3 = rospy.get_param('~cam3_name', 'd435_right')
 
+        print("List of cameras:")
+        print(self.cam1)
+        print(self.cam2)
+        print(self.cam3)
+
         # check services exist
-        rospy.wait_for_service('/image_saver/{}/save'.format(self.cam1))
-        rospy.wait_for_service('/image_saver/{}/save'.format(self.cam2))
-        rospy.wait_for_service('/image_saver/{}/save'.format(self.cam3))
+        rospy.wait_for_service('/image_saver_{}/save'.format(self.cam1))
+        rospy.wait_for_service('/image_saver_{}/save'.format(self.cam2))
+        rospy.wait_for_service('/image_saver_{}/save'.format(self.cam3))
 
         # create service proxys
-        self.srv1 = rospy.ServiceProxy('/image_saver/{}/save'.format(self.cam1), Empty)
-        self.srv2 = rospy.ServiceProxy('/image_saver/{}/save'.format(self.cam2), Empty)
-        self.srv3 = rospy.ServiceProxy('/image_saver/{}/save'.format(self.cam3), Empty)
+        self.srv1 = rospy.ServiceProxy('/image_saver_{}/save'.format(self.cam1), Empty)
+        self.srv2 = rospy.ServiceProxy('/image_saver_{}/save'.format(self.cam2), Empty)
+        self.srv3 = rospy.ServiceProxy('/image_saver_{}/save'.format(self.cam3), Empty)
 
         self.empty = Empty()
 
@@ -38,18 +43,20 @@ class CLI():
             try:
                 cam = int(input('Camera: '))
                 if cam == 1:
-                    self.srv1(self.empty)
+                    resp = self.srv1()
                 elif cam == 2:
-                    self.srv2(self.empty)
+                    resp = self.srv2()
                 elif cam == 3:
-                    self.srv3(self.empty)
+                    resp = self.srv3()
                 elif cam == 0:
                     break
                 else:
                     print('Invalid option')
+                
+                print("Response: {}".format(resp))
+
             except ValueError:
                 print('Invalid option')
-
 
         
         

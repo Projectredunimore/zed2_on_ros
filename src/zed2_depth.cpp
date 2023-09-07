@@ -24,6 +24,7 @@
 #include "videocapture.hpp"
 
 #include "ocv_display.hpp"
+#include <string>
 
 #include <iostream>
 #include <iomanip>
@@ -78,16 +79,20 @@ int main(int argc, char *argv[])
     // get parameters from launch file
     bool PUBLISH_POINTCLOUD = false;
     bool DISPLAY_IMAGES = false;
+    std::string LEFT_FRAME = "left_frame";
+    std::string RIGHT_FRAME = "right_frame";
+
     nh.getParam("PUBLISH_POINTCLOUD", PUBLISH_POINTCLOUD);
     nh.getParam("DISPLAY_IMAGES", DISPLAY_IMAGES);
-
+    nh.getParam("left_frame", LEFT_FRAME);
+    nh.getParam("right_frame", RIGHT_FRAME);
     // <---- ROS initialization
 
     sl_oc::VERBOSITY verbose = sl_oc::VERBOSITY::INFO;
 
     // ----> Set Video parameters
     sl_oc::video::VideoParams params;
-    params.res = sl_oc::video::RESOLUTION::HD720;
+    params.res = sl_oc::video::RESOLUTION::HD1080;
     params.fps = sl_oc::video::FPS::FPS_30;
     params.verbose = verbose;
     // <---- Set Video parameters
@@ -383,14 +388,14 @@ int main(int argc, char *argv[])
 
             // Publish pointcloud on topic
             pcl::toROSMsg(*pclCloud, cloud_msg);
-            cloud_msg.header.frame_id = "camera_link";
+            cloud_msg.header.frame_id = LEFT_FRAME;
             cloud_msg.header.stamp = ros::Time::now();
             cloud_pub.publish(cloud_msg);
 
             // Publish Depth frame on topic
             disp_msg = cv_bridge::CvImage(std_msgs::Header(), "mono16", left_disp_image).toImageMsg();
             disp_msg->header.stamp = now;
-            disp_msg->header.frame_id = "left_frame";
+            disp_msg->header.frame_id = LEFT_FRAME;
             depth_pub.publish(disp_msg);
         }
         // <---- If the frame is valid we can display it
