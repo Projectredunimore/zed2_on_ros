@@ -2,25 +2,25 @@
 <launch>
 
     <arg name="cam1_name" default="zed2"/>
-    <arg name="cam2_name" default="d435_left"/>
-    <arg name="cam3_name" default="d435_right"/>
+    <arg name="cam2_name" default="d435i"/>
+    <arg name="cam3_name" default="t265"/>
 
     <node name="image_saver_$(arg cam1_name)" pkg="image_view" type="image_saver">
         <param name="save_all_image" value="false"/>
-        <param name="filename_format" value="$(arg cam1_name)%04d.%s"/>
-        <remap from="image" to="$(arg cam1_name)/image_raw"/>
+	<param name="filename_format" value="$(find zed2_on_ros)/$(arg cam1_name)%04d.%s"/>
+	<remap from="image" to="$(arg cam1_name)/color/image_raw"/>
     </node>
 
     <node name="image_saver_$(arg cam2_name)" pkg="image_view" type="image_saver">
         <param name="save_all_image" value="false"/>
-        <param name="filename_format" value="$(arg cam2_name)%04d.%s"/>
-        <remap from="image" to="$(arg cam2_name)/image_raw"/>
+	<param name="filename_format" value="$(find zed2_on_ros)/$(arg cam2_name)%04d.%s"/>
+	<remap from="image" to="$(arg cam2_name)/color/image_raw"/>
     </node>
 
     <node name="image_saver_$(arg cam3_name)" pkg="image_view" type="image_saver">
         <param name="save_all_image" value="false"/>
-        <param name="filename_format" value="$(arg cam3_name)%04d.%s"/>
-        <remap from="image" to="$(arg cam3_name)/image_raw"/>
+	<param name="filename_format" value="$(find zed2_on_ros)/$(arg cam3_name)%04d.%s"/>
+	<remap from="image" to="$(arg cam3_name)/color/image_raw"/>
     </node>
 
     <node name="images_cli" pkg="zed2_on_ros" type="image_saver.py" output="screen">

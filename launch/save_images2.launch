@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<launch>
+
+    <arg name="cam1_name" default="zed2"/>
+    <arg name="cam2_name" default="d435i"/>
+    <arg name="cam3_name" default="d435"/>
+
+
+    <node name="images_cli" pkg="zed2_on_ros" type="image_saver2.py" output="screen">
+        <param name="cam1_name" value="$(arg cam1_name)"/>
+        <param name="cam2_name" value="$(arg cam2_name)"/>
+        <param name="cam3_name" value="$(arg cam3_name)"/>
+	<remap from="camera1/color/image_raw" to="$(arg cam1_name)/left/image_rect_color"/>
+	<remap from="camera2/color/image_raw" to="$(arg cam2_name)/color/image_raw"/>
+        <remap from="camera3/color/image_raw" to="$(arg cam3_name)/image_raw"/>
+    </node>
+
+</launch>
