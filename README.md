@@ -68,7 +68,7 @@ Build and install (jump over the first two lines if you downloaded through termi
 Create symlink for ROS includes
 
     cd /usr/local/include
-    sudo ln -s pcl-1.x/pcl pcl 
+    sudo ln -s pcl-1.x/pcl/ pcl 
     cd
     sudo ln -s /usr/include/eigen3/Eigen/ /usr/local/include/Eigen
 
